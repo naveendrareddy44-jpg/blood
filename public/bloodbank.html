@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Portal Access</title>
+    <style>
+        /* Hide the actual content by default */
+        #staffContent { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Hidden Main Portal -->
+    <div id="staffContent">
+        <h2>Blood Bank Staff Dashboard</h2>
+        <form id="loginForm">
+            <input type="text" placeholder="Staff Username" required><br><br>
+            <input type="password" placeholder="Password" required><br><br>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <script>
+        // Secret PIN required just to view the login form
+        const STAFF_PIN = "8899"; // Change this to your secret PIN
+
+        window.onload = () => {
+            const userPin = prompt("Restricted Access: Enter Staff PIN to proceed:");
+            
+            if (userPin === STAFF_PIN) {
+                // Reveal the hidden login page
+                document.getElementById('staffContent').style.display = 'block';
+            } else {
+                alert("Unauthorized access.");
+                // Redirect back to home page
+                window.location.href = "index.html";
+            }
+        };
+    </script>
+</body>
+</html>

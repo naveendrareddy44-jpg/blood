@@ -1,157 +1,171 @@
 const express = require('express');
-const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: '*' } });
+
+const DB_FILE = path.join(__dirname, 'database.json');
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const DATA_FILE = path.join(__dirname, 'database.json');
-
-// Helper functions for database reading/writing
-function readData() {
-    try {
-        const raw = fs.readFileSync(DATA_FILE, 'utf8');
-        return JSON.parse(raw);
-    } catch (e) {
-        return { visitors: 0, donors: [], bookings: [], hospitals: [] };
-    }
+// Helper functions to read/write database.json
+function readDB() {
+  if (!fs.existsSync(DB_FILE)) {
+    return { blood_banks: [], inventory: [], emergency_requests: [], request_responses: [] };
+  }
+  const rawData = fs.readFileSync(DB_FILE, 'utf8');
+  return JSON.parse(rawData);
 }
 
-function saveData(data) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+function writeDB(data) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// Middleware to track visitor traffic
-app.use((req, res, next) => {
-    if (req.path === '/' || req.path === '/index.html') {
-        const data = readData();
-        data.visitors = (data.visitors || 0) + 1;
-        saveData(data);
-    }
-    next();
+// Distance Helper (Haversine formula for km)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Real-Time Socket Connection
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('register_blood_bank', (bloodBankId) => {
+    socket.join(`blood_bank_${bloodBankId}`);
+    console.log(`Socket ${socket.id} joined blood bank room ${bloodBankId}`);
+  });
+
+  socket.on('track_request', (requestId) => {
+    socket.join(`request_${requestId}`);
+    console.log(`Socket ${socket.id} joined tracking room ${requestId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
 });
 
-// --- API ENDPOINTS ---
+// API: Patient Creates Request
+app.post('/api/requests', (req, res) => {
+  const {
+    patient_name,
+    patient_phone,
+    blood_group,
+    component_type,
+    units_needed,
+    hospital_name,
+    latitude = 12.9716,
+    longitude = 77.5946
+  } = req.body;
 
-// 1. DONOR REGISTRATION & HEALTH CHECK
-app.post('/api/donors/register', (req, res) => {
-    const { name, bloodGroup, age, weight, diseaseHistory, phone, location } = req.body;
-    
-    // Health Verification Engine
-    const numAge = parseInt(age);
-    const numWeight = parseFloat(weight);
-    let isHealthy = true;
-    let qualityScore = 'A+ Grade (Excellent)';
-    let rejectionReason = null;
+  const db = readDB();
+  const requestId = 'req_' + Date.now();
 
-    if (numAge < 18 || numAge > 65) {
-        isHealthy = false;
-        rejectionReason = 'Age must be between 18 and 65 years.';
-    } else if (numWeight < 50) {
-        isHealthy = false;
-        rejectionReason = 'Weight must be at least 50 kg.';
-    } else if (diseaseHistory && diseaseHistory.toLowerCase() !== 'none' && diseaseHistory.toLowerCase() !== 'no') {
-        isHealthy = false;
-        rejectionReason = 'Disqualified due to reported medical/disease history.';
-    }
+  const newRequest = {
+    id: requestId,
+    patient_name,
+    patient_phone,
+    blood_group,
+    component_type,
+    units_needed,
+    hospital_name,
+    latitude,
+    longitude,
+    status: 'PENDING',
+    created_at: new Date().toISOString()
+  };
 
-    if (!isHealthy) qualityScore = 'Unfit for Donation';
+  db.emergency_requests.push(newRequest);
+  writeDB(db);
 
-    const newDonor = {
-        id: 'DON-' + Date.now(),
-        name,
-        bloodGroup,
-        age: numAge,
-        weight: numWeight,
-        diseaseHistory,
-        phone,
-        location,
-        isHealthy,
-        qualityScore,
-        rejectionReason,
-        registeredAt: new Date().toLocaleString()
-    };
+  // Find matching blood banks and broadcast alerts
+  const notifiedBanks = [];
+  db.blood_banks.forEach((bb) => {
+    const dist = calculateDistance(latitude, longitude, bb.latitude, bb.longitude);
+    const stock = db.inventory.find(i => 
+      i.blood_bank_id === bb.id && 
+      i.blood_group === blood_group && 
+      i.component_type === component_type
+    );
 
-    const data = readData();
-    data.donors.push(newDonor);
-    saveData(data);
+    const currentStock = stock ? stock.available_units : 0;
 
-    res.json({ success: true, donor: newDonor });
-});
+    notifiedBanks.push(bb);
 
-// 2. SEARCH HOSPITALS & BLOOD AVAILABILITY
-app.get('/api/hospitals/search', (req, res) => {
-    const { bloodGroup, type } = req.query; // type: pre-booking, booking, emergency
-    const data = readData();
-
-    let results = data.hospitals.filter(h => h.bloodStock && h.bloodStock[bloodGroup] > 0);
-
-    // If Emergency, add priority flags and sort by available units descending
-    if (type === 'emergency') {
-        results = results.map(h => ({
-            ...h,
-            emergencyDispatch: true,
-            dispatchEta: '15-30 mins'
-        })).sort((a, b) => b.bloodStock[bloodGroup] - a.bloodStock[bloodGroup]);
-    }
-
-    res.json({ success: true, count: results.length, type, hospitals: results });
-});
-
-// 3. BOOK BLOOD REQUEST
-app.post('/api/bookings/create', (req, res) => {
-    const { patientName, phone, bloodGroup, hospitalId, bookingType } = req.body;
-    const data = readData();
-
-    const hospital = data.hospitals.find(h => h.id === parseInt(hospitalId));
-    if (!hospital || !hospital.bloodStock[bloodGroup] || hospital.bloodStock[bloodGroup] <= 0) {
-        return res.status(400).json({ success: false, message: 'Blood stock unavailable' });
-    }
-
-    // Deduct stock
-    hospital.bloodStock[bloodGroup] -= 1;
-
-    const newBooking = {
-        id: 'BKG-' + Date.now(),
-        patientName,
-        phone,
-        bloodGroup,
-        hospitalName: hospital.name,
-        hospitalAddress: hospital.address,
-        bookingType, // pre-booking, booking, emergency
-        status: 'Confirmed',
-        createdAt: new Date().toLocaleString()
-    };
-
-    data.bookings.push(newBooking);
-    saveData(data);
-
-    res.json({ success: true, booking: newBooking });
-});
-
-// 4. ADMIN METRICS DASHBOARD
-app.get('/api/admin/metrics', (req, res) => {
-    const data = readData();
-    const totalDonors = data.donors.length;
-    const healthyDonors = data.donors.filter(d => d.isHealthy).length;
-    
-    // Calculate Blood Quality Accuracy Rate
-    const accuracy = totalDonors > 0 ? ((healthyDonors / totalDonors) * 100).toFixed(1) : 100;
-
-    res.json({
-        totalVisitors: data.visitors || 0,
-        totalDonors,
-        healthyDonors,
-        rejectedDonors: totalDonors - healthyDonors,
-        totalBookings: data.bookings.length,
-        qualityAccuracyRate: accuracy + '%'
+    // Dynamic alert broadcast to blood bank WebSocket
+    io.to(`blood_bank_${bb.id}`).emit('emergency_alert', {
+      requestId,
+      patientName: patient_name,
+      bloodGroup: blood_group,
+      componentType: component_type,
+      unitsNeeded: units_needed,
+      hospitalName: hospital_name,
+      distanceKm: dist.toFixed(2),
+      currentStock
     });
+  });
+
+  res.status(201).json({
+    success: true,
+    requestId,
+    notifiedBloodBanksCount: notifiedBanks.length
+  });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Blood Bank Server running at http://localhost:${PORT}`);
+// API: Blood Bank Responds & Reserves Stock (No PIN/Auth)
+app.post('/api/requests/:requestId/respond', (req, res) => {
+  const { requestId } = req.params;
+  const { blood_bank_id, units_offered, hold_duration_minutes = 45 } = req.body;
+
+  const db = readDB();
+  const holdExpiresAt = new Date(Date.now() + hold_duration_minutes * 60 * 1000).toISOString();
+
+  const responseObj = {
+    id: db.request_responses.length + 1,
+    request_id: requestId,
+    blood_bank_id,
+    units_offered,
+    hold_expires_at: holdExpiresAt,
+    responded_at: new Date().toISOString()
+  };
+
+  db.request_responses.push(responseObj);
+
+  // Update request status
+  const reqObj = db.emergency_requests.find(r => r.id === requestId);
+  if (reqObj) reqObj.status = 'ACCEPTED';
+
+  writeDB(db);
+
+  const bbInfo = db.blood_banks.find(b => b.id === blood_bank_id) || {};
+
+  const updatePayload = {
+    responseId: responseObj.id,
+    bloodBankId: blood_bank_id,
+    bloodBankName: bbInfo.name || 'Blood Bank',
+    phone: bbInfo.phone || 'N/A',
+    address: bbInfo.address || 'N/A',
+    unitsOffered: units_offered,
+    holdExpiresAt
+  };
+
+  // Notify patient channel
+  io.to(`request_${requestId}`).emit('blood_bank_responded', updatePayload);
+
+  res.json({ success: true, response: updatePayload });
 });
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`LifeFlow running at http://localhost:${PORT}`));

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - LifeFlow</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <a href="index.html" class="brand" style="text-decoration: none;">
+            <div class="logo-icon"><i class="fa-solid fa-droplet"></i></div>
+            <span class="brand-name">LifeFlow Admin Control</span>
+        </a>
+
+        <div class="nav-right">
+            <a href="index.html" class="nav-link"><i class="fa-solid fa-house"></i> Main Portal</a>
+            <a href="admin.html" class="btn-admin active-admin"><i class="fa-solid fa-user-shield"></i> Admin Panel</a>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        
+        <!-- Quick Stats Analytics Bar -->
+        <section class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon icon-red-bg"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <h3>142</h3>
+                    <p>Registered Donors</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon icon-blue-bg"><i class="fa-solid fa-truck-medical"></i></div>
+                <div>
+                    <h3>8 Pending</h3>
+                    <p>Emergency Requests</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon icon-green-bg"><i class="fa-solid fa-hospital"></i></div>
+                <div>
+                    <h3>12</h3>
+                    <p>Active Blood Banks</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon icon-orange-bg"><i class="fa-solid fa-box-archive"></i></div>
+                <div>
+                    <h3>380 Units</h3>
+                    <p>Total Stock Available</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Admin Action Management Table -->
+        <section class="admin-table-card">
+            <div class="table-top">
+                <h2><i class="fa-solid fa-list-check icon-red"></i> Patient Emergency Request Reviews</h2>
+                <button class="btn-secondary"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Request ID</th>
+                        <th>Patient Name</th>
+                        <th>Blood Group</th>
+                        <th>Units</th>
+                        <th>Hospital Location</th>
+                        <th>Urgency Level</th>
+                        <th>Action Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>#REQ-8902</strong></td>
+                        <td>Eleanor Vance</td>
+                        <td><span class="blood-tag">O-</span></td>
+                        <td>2 Units</td>
+                        <td>Central City Hospital</td>
+                        <td><span class="badge badge-critical">Critical</span></td>
+                        <td>
+                            <button class="action-btn approve-btn"><i class="fa-solid fa-check"></i> Approve</button>
+                            <button class="action-btn reject-btn"><i class="fa-solid fa-xmark"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>#REQ-8901</strong></td>
+                        <td>David Miller</td>
+                        <td><span class="blood-tag">AB+</span></td>
+                        <td>1 Unit</td>
+                        <td>Grace Medical Center</td>
+                        <td><span class="badge badge-urgent">Urgent</span></td>
+                        <td>
+                            <button class="action-btn completed-btn" disabled><i class="fa-solid fa-circle-check"></i> Processed</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+</body>
+</html>

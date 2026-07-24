@@ -1,28 +1,36 @@
 {
-  "visitors": 0,
-  "donors": [],
-  "bookings": [],
-  "hospitals": [
+  "blood_banks": [
     {
       "id": 1,
-      "name": "City Central Hospital",
-      "address": "123 Main St, Block A",
-      "contact": "+1 555-0192",
-      "bloodStock": { "A+": 10, "A-": 2, "B+": 8, "B-": 1, "O+": 15, "O-": 4, "AB+": 5, "AB-": 2 }
+      "name": "Lions Blood Bank",
+      "phone": "08023301234",
+      "address": "Vijayanagar, Bengaluru",
+      "latitude": 12.9716,
+      "longitude": 77.5946
     },
     {
       "id": 2,
-      "name": "St. Jude Emergency Center",
-      "address": "456 Healthcare Ave",
-      "contact": "+1 555-0843",
-      "bloodStock": { "A+": 4, "A-": 0, "B+": 12, "B-": 3, "O+": 6, "O-": 8, "AB+": 2, "AB-": 0 }
+      "name": "Rashtrotthana Blood Centre",
+      "phone": "08028601234",
+      "address": "Rajarajeshwari Nagar, Bengaluru",
+      "latitude": 12.9279,
+      "longitude": 77.5152
+    }
+  ],
+  "inventory": [
+    {
+      "blood_bank_id": 1,
+      "blood_group": "O+",
+      "component_type": "Whole",
+      "available_units": 10
     },
     {
-      "id": 3,
-      "name": "Metro Trauma & Blood Institute",
-      "address": "789 Life Care Rd",
-      "contact": "+1 555-0411",
-      "bloodStock": { "A+": 0, "A-": 5, "B+": 3, "B-": 0, "O+": 20, "O-": 1, "AB+": 7, "AB-": 4 }
+      "blood_bank_id": 2,
+      "blood_group": "O+",
+      "component_type": "Whole",
+      "available_units": 5
     }
-  ]
+  ],
+  "emergency_requests": [],
+  "request_responses": []
 }

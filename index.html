@@ -2,59 +2,748 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Blood Bank Management System</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeFlow - Emergency Blood Network Bangalore</title>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Modern Reset & Theme Variables */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        :root {
+            --primary: #e63946;
+            --primary-dark: #c5221f;
+            --dark: #0f172a;
+            --light-bg: #f8fafc;
+            --border: #e2e8f0;
+            --gray: #64748b;
+        }
+
+        body { background-color: var(--light-bg); color: #1e293b; min-height: 100vh; }
+
+        /* Top Header Navigation */
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 5%; background: #ffffff; border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .logo-icon { width: 38px; height: 38px; background: #ffe2e2; color: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .brand-name { font-weight: 700; font-size: 1.25rem; color: var(--dark); }
+
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+        .nav-btn { background: none; border: none; padding: 8px 14px; font-weight: 600; font-size: 0.88rem; color: var(--gray); cursor: pointer; border-radius: 6px; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .nav-btn:hover { background: #f1f5f9; color: var(--dark); }
+        .bank-btn { background: var(--dark); color: #fff; }
+        .bank-btn:hover { background: var(--primary); }
+        .admin-btn { background: #475569; color: #fff; }
+        .admin-btn:hover { background: #0f172a; }
+
+        /* Dynamic Views Management */
+        .view-page { display: none; padding: 30px 5%; max-width: 1200px; margin: 0 auto; }
+        .view-page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Home View Styles */
+        .hero { text-align: center; padding: 30px 20px 20px; max-width: 750px; margin: 0 auto; }
+        .hero h1 { font-size: 2.2rem; color: var(--dark); margin-bottom: 12px; }
+        .hero p { color: var(--gray); font-size: 1rem; }
+        
+        .portal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 24px; }
+        .portal-card { background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
+        .portal-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
+        .card-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 16px; }
+        .donor-icon { background: #ffe2e2; color: var(--primary); }
+        .patient-icon { background: #e0f2fe; color: #0284c7; }
+        .stock-icon { background: #fef3c7; color: #d97706; }
+
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+        .modal-card { background: #fff; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; border-radius: 12px; padding: 28px; position: relative; }
+        .modal-close { position: absolute; top: 20px; right: 20px; background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1rem; cursor: pointer; color: var(--gray); }
+
+        /* Form Structure */
+        .form-section { margin-bottom: 20px; }
+        .form-section h3 { font-size: 1rem; color: var(--dark); margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+        .full-width { grid-column: 1 / -1; }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label { font-size: 0.82rem; font-weight: 600; color: #475569; }
+        .field input, .field select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .field input:focus, .field select:focus { border-color: var(--primary); }
+        .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .submit-btn:hover { background: var(--primary-dark); }
+
+        /* Segmented Type Selector */
+        .type-selector { display: flex; gap: 10px; margin-bottom: 16px; background: #f1f5f9; padding: 4px; border-radius: 8px; }
+        .type-btn { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 600; font-size: 0.85rem; border-radius: 6px; cursor: pointer; color: var(--gray); text-align: center; }
+        .type-btn.active { background: #fff; color: var(--dark); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* Metrics Grid */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .metric-card { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 18px; text-align: center; }
+        .metric-card h4 { font-size: 0.82rem; color: var(--gray); text-transform: uppercase; margin-bottom: 6px; }
+        .metric-card span { font-size: 1.8rem; font-weight: 700; color: var(--dark); }
+
+        /* Table & Cards */
+        .data-card { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; padding: 10px 14px; font-size: 0.8rem; color: var(--gray); border-bottom: 1px solid var(--border); }
+        td { padding: 12px 14px; font-size: 0.88rem; border-bottom: 1px solid #f1f5f9; }
+        
+        /* Badges & Buttons */
+        .blood-badge { background: #ffe2e2; color: var(--primary-dark); font-weight: 700; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; display: inline-block; margin: 2px; }
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-approved { background: #dcfce7; color: #15803d; }
+
+        .action-btn { padding: 5px 10px; border: none; border-radius: 4px; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+        .btn-approve { background: #10b981; color: #fff; }
+        .btn-delete { background: #ef4444; color: #fff; }
+        .logout-btn { background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.82rem; }
+
+        /* Security Login Card */
+        .login-card { background: #fff; padding: 36px; border-radius: 12px; border: 1px solid var(--border); max-width: 420px; margin: 40px auto; text-align: center; }
+        .login-card h2 { margin-bottom: 8px; color: var(--dark); }
+        .login-card p { color: var(--gray); font-size: 0.88rem; margin-bottom: 24px; }
+        .error-msg { color: #dc2626; font-size: 0.82rem; margin-top: 10px; display: none; }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>🩸 Blood Bank Portal</h1>
-        <nav>
-            <a href="index.html">Dashboard</a>
-            <a href="donor.html">Donor Registration</a>
-            <a href="patient.html">Patient Portal</a>
-        </nav>
+
+    <!-- Header Navigation -->
+    <header class="navbar">
+        <div class="brand" onclick="showPage('home-view')">
+            <div class="logo-icon"><i class="fa-solid fa-droplet"></i></div>
+            <span class="brand-name">LifeFlow Bangalore</span>
+        </div>
+
+        <div class="nav-right">
+            <button class="nav-btn" onclick="showPage('home-view')"><i class="fa-solid fa-house"></i> Home</button>
+            <button class="nav-btn" onclick="openModal('donorModal')"><i class="fa-solid fa-hand-holding-medical"></i> Donate</button>
+            <button class="nav-btn" onclick="openModal('patientModal')"><i class="fa-solid fa-bed-pulse"></i> Patient Request</button>
+            <button class="nav-btn bank-btn" onclick="showPage('bank-login-view')"><i class="fa-solid fa-hospital-user"></i> Bank Login</button>
+            <button class="nav-btn admin-btn" onclick="showPage('admin-login-view')"><i class="fa-solid fa-user-gear"></i> Admin</button>
+        </div>
     </header>
 
-    <div class="container">
-        <div class="card">
-            <h2>⚙️ Admin System Dashboard</h2>
-            <p>Live metrics and system usage analytics</p>
+    <!-- 1. HOME VIEW -->
+    <main id="home-view" class="view-page active">
+        <section class="hero">
+            <h1>Bangalore Emergency Blood Portal</h1>
+            <p>Register as a blood donor, submit emergency blood requirements, or instantly view live available blood group stocks across Bangalore.</p>
+        </section>
 
-            <div class="grid-metrics">
-                <div class="metric-box">
-                    <h3 id="visitors">0</h3>
-                    <p>Total Site Visitors</p>
+        <div class="portal-grid">
+            <div class="portal-card" onclick="openModal('donorModal')">
+                <div>
+                    <div class="card-icon donor-icon"><i class="fa-solid fa-hand-holding-medical"></i></div>
+                    <h3>Donor Portal</h3>
+                    <p style="color:var(--gray); font-size:0.88rem; margin-top:6px;">Book a time slot and register as an active blood donor in Bangalore.</p>
                 </div>
-                <div class="metric-box">
-                    <h3 id="donors">0</h3>
-                    <p>Registered Donors</p>
+                <p style="margin-top:20px; font-weight:600; color:var(--primary); font-size:0.85rem;">Book Donation Slot &rarr;</p>
+            </div>
+
+            <div class="portal-card" onclick="openModal('patientModal')">
+                <div>
+                    <div class="card-icon patient-icon"><i class="fa-solid fa-bed-pulse"></i></div>
+                    <h3>Patient Request Portal</h3>
+                    <p style="color:var(--gray); font-size:0.88rem; margin-top:6px;">Submit emergency requirements or pre-book supplies for surgeries.</p>
                 </div>
-                <div class="metric-box">
-                    <h3 id="healthy">0</h3>
-                    <p>Healthy Donors</p>
+                <p style="margin-top:20px; font-weight:600; color:#0284c7; font-size:0.85rem;">Request Blood Supply &rarr;</p>
+            </div>
+
+            <!-- HOME PAGE POPUP TRIGGER: AVAILABLE BLOOD GROUPS -->
+            <div class="portal-card" onclick="openModal('stockModal')">
+                <div>
+                    <div class="card-icon stock-icon"><i class="fa-solid fa-droplet"></i></div>
+                    <h3>Check Available Blood Groups</h3>
+                    <p style="color:var(--gray); font-size:0.88rem; margin-top:6px;">Pop up live real-time stock summary for all blood groups across Bangalore.</p>
                 </div>
-                <div class="metric-box">
-                    <h3 id="accuracy">0%</h3>
-                    <p>Blood Screening Accuracy</p>
+                <p style="margin-top:20px; font-weight:600; color:#d97706; font-size:0.85rem;">View Blood Groups Pop-up &rarr;</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL 1: AVAILABLE BLOOD GROUPS POP-UP (HOME PAGE) -->
+    <div id="stockModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('stockModal')"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom:6px;"><i class="fa-solid fa-droplet" style="color:var(--primary);"></i> Real-Time Available Blood Groups</h2>
+            <p style="color:var(--gray); font-size:0.88rem; margin-bottom:20px;">Live summary of available blood groups across partner facilities in Bangalore.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px;">
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">A+</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">5 Facilities</p>
+                </div>
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">A-</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">2 Facilities</p>
+                </div>
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">B+</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">5 Facilities</p>
+                </div>
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">B-</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">2 Facilities</p>
+                </div>
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">O+</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">5 Facilities</p>
+                </div>
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">O-</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">3 Facilities</p>
+                </div>
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">AB+</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">4 Facilities</p>
+                </div>
+                <div style="background:#ffe2e2; text-align:center; padding:14px; border-radius:8px;">
+                    <span style="font-weight:700; color:var(--primary-dark); font-size:1.2rem;">AB-</span>
+                    <p style="font-size:0.75rem; color:var(--gray); margin-top:2px;">1 Facility</p>
                 </div>
             </div>
+
+            <button onclick="closeModal('stockModal')" class="submit-btn"><i class="fa-solid fa-check"></i> Close Pop-up</button>
         </div>
     </div>
 
+    <!-- MODAL 2: POST-PATIENT REGISTRATION AVAILABLE BLOOD BANKS POP-UP -->
+    <div id="banksPopupModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('banksPopupModal')"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom:6px;"><i class="fa-solid fa-hospital" style="color:var(--primary);"></i> Available Blood Banks</h2>
+            <p style="color:var(--gray); font-size:0.88rem; margin-bottom:16px;">Matching facilities with ready stock for your requested blood group.</p>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <input type="text" id="bankSearch" onkeyup="filterBangaloreBanks()" placeholder="Search area or center..." style="flex:1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none;">
+                <select id="groupFilter" onchange="filterBangaloreBanks()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none;">
+                    <option value="">All Groups</option>
+                    <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                    <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                </select>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Blood Bank Center</th>
+                            <th>Area / Location</th>
+                            <th>Available Blood Groups</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bangaloreBanksTable"></tbody>
+                </table>
+            </div>
+
+            <button onclick="closeModal('banksPopupModal')" class="submit-btn" style="margin-top:20px;"><i class="fa-solid fa-circle-check"></i> Done</button>
+        </div>
+    </div>
+
+    <!-- MODAL 3: DONOR REGISTRATION FORM -->
+    <div id="donorModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('donorModal')"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom:6px;"><i class="fa-solid fa-hand-holding-medical" style="color:var(--primary);"></i> Donor Slot Registration</h2>
+            <p style="color:var(--gray); font-size:0.88rem; margin-bottom:20px;">Fill out your details and pick a convenient appointment slot.</p>
+
+            <form id="donorForm" onsubmit="handleDonorSubmit(event)">
+                <div class="form-section">
+                    <h3>1. Personal Details</h3>
+                    <div class="form-grid">
+                        <div class="field"><label>Full Name</label><input type="text" id="donorName" required placeholder="e.g. Rahul Sharma"></div>
+                        <div class="field"><label>Age</label><input type="number" id="donorAge" min="18" max="65" required placeholder="28"></div>
+                        <div class="field">
+                            <label>Blood Group</label>
+                            <select id="donorGroup" required>
+                                <option value="">Select Group</option>
+                                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                                <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>Phone Number</label><input type="tel" id="donorPhone" required placeholder="+91 98765 43210"></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>2. Location & Schedule Slot Selection</h3>
+                    <div class="form-grid">
+                        <div class="field full-width">
+                            <label>Bangalore Area / Locality</label>
+                            <select id="donorCity" required>
+                                <option value="">Select Bangalore Locality</option>
+                                <option>Indiranagar</option><option>Koramangala</option><option>Jayanagar</option>
+                                <option>Whitefield</option><option>Electronic City</option><option>Hebbal</option><option>Malleswaram</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>Preferred Date</label><input type="date" id="donorDate" required></div>
+                        <div class="field">
+                            <label>Time Slot</label>
+                            <select id="donorTime" required>
+                                <option value="">Select Slot</option>
+                                <option>09:00 AM - 11:00 AM</option>
+                                <option>11:00 AM - 01:00 PM</option>
+                                <option>02:00 PM - 04:00 PM</option>
+                                <option>04:00 PM - 06:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn"><i class="fa-solid fa-calendar-check"></i> Confirm Donor Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: PATIENT REQUEST FORM -->
+    <div id="patientModal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('patientModal')"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom:6px;"><i class="fa-solid fa-bed-pulse" style="color:#0284c7;"></i> Patient Requirement Sheet</h2>
+            <p style="color:var(--gray); font-size:0.88rem; margin-bottom:16px;">Select booking type and fill in hospital request details.</p>
+
+            <form id="patientForm" onsubmit="handlePatientSubmit(event)">
+                <div class="type-selector">
+                    <button type="button" class="type-btn active" id="btnEmergency" onclick="setPatientCategory('Emergency')"><i class="fa-solid fa-triangle-exclamation" style="color:var(--primary);"></i> Emergency Request</button>
+                    <button type="button" class="type-btn" id="btnPrebooking" onclick="setPatientCategory('Pre-Booking')"><i class="fa-solid fa-clock-rotate-left" style="color:#0284c7;"></i> Pre-Booking</button>
+                </div>
+                <input type="hidden" id="patientCategory" value="Emergency">
+
+                <div class="form-section">
+                    <h3>1. Patient Requirement</h3>
+                    <div class="form-grid">
+                        <div class="field"><label>Patient Name</label><input type="text" id="patientName" required placeholder="e.g. Priya Rao"></div>
+                        <div class="field">
+                            <label>Required Blood Group</label>
+                            <select id="patientGroup" required>
+                                <option value="">Select Group</option>
+                                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                                <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                            </select>
+                        </div>
+                        <div class="field"><label>Units Required</label><input type="number" id="patientUnits" min="1" max="10" required placeholder="2"></div>
+                        <div class="field"><label>Requirement Date</label><input type="date" id="patientReqDate" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>2. Hospital & Contact Information</h3>
+                    <div class="form-grid">
+                        <div class="field full-width"><label>Bangalore Hospital Name & Ward</label><input type="text" id="patientHospital" required placeholder="e.g. Manipal Hospital, HAL Old Airport Rd"></div>
+                        <div class="field"><label>Attendant Phone</label><input type="tel" id="patientPhone" required placeholder="+91 91234 56789"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" style="background:#0284c7;"><i class="fa-solid fa-paper-plane"></i> Submit & Pop Up Available Blood Banks</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BLOOD BANK LOGIN VIEW -->
+    <main id="bank-login-view" class="view-page">
+        <div class="login-card">
+            <div class="card-icon bank-icon" style="margin: 0 auto 16px; background:#f0fdf4; color:#16a34a;"><i class="fa-solid fa-hospital-user"></i></div>
+            <h2>Blood Bank Portal</h2>
+            <p>Authorized login for registered blood bank managers.</p>
+            <form onsubmit="handleBankLogin(event)">
+                <div class="field" style="margin-bottom:14px; text-align:left;">
+                    <label>Email Address</label>
+                    <input type="email" id="bankEmail" required placeholder="bank@lifeflow.com">
+                </div>
+                <div class="field" style="margin-bottom:14px; text-align:left;">
+                    <label>Password</label>
+                    <input type="password" id="bankPass" required placeholder="••••••••">
+                </div>
+                <p id="bankError" class="error-msg">Invalid email or password.</p>
+                <button type="submit" class="submit-btn" style="background:#16a34a;"><i class="fa-solid fa-lock"></i> Access Portal</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- ADMIN LOGIN VIEW -->
+    <main id="admin-login-view" class="view-page">
+        <div class="login-card">
+            <div class="card-icon" style="margin: 0 auto 16px; background:#f1f5f9; color:#0f172a;"><i class="fa-solid fa-user-shield"></i></div>
+            <h2>Super Admin Portal</h2>
+            <p>Enter your administrator credentials to access system management.</p>
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="field" style="margin-bottom:14px; text-align:left;">
+                    <label>Username</label>
+                    <input type="text" id="adminUser" required placeholder="Username (default: admin)">
+                </div>
+                <div class="field" style="margin-bottom:14px; text-align:left;">
+                    <label>Password</label>
+                    <input type="password" id="adminPass" required placeholder="Password (default: admin123)">
+                </div>
+                <p id="adminError" class="error-msg">Invalid username or password.</p>
+                <button type="submit" class="submit-btn" style="background:#0f172a;"><i class="fa-solid fa-shield-halved"></i> Login to Admin Panel</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- BLOOD BANK DASHBOARD VIEW -->
+    <main id="bank-view" class="view-page">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2><i class="fa-solid fa-hospital-user" style="color:#16a34a;"></i> Blood Bank Management Dashboard</h2>
+            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+
+        <div class="type-selector" style="max-width:400px; margin-bottom:20px;">
+            <button class="type-btn active" id="tabBankEmergency" onclick="switchBankTab('Emergency')">Emergency Requests</button>
+            <button class="type-btn" id="tabBankPrebooking" onclick="switchBankTab('Pre-Booking')">Pre-Bookings</button>
+        </div>
+        
+        <div class="data-card">
+            <h3 id="bankTableTitle" style="margin-bottom:12px;">Live Emergency Patient Requests</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Group</th>
+                            <th>Units</th>
+                            <th>Required Date</th>
+                            <th>Hospital</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bankPatientTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- ADMIN DASHBOARD VIEW -->
+    <main id="admin-view" class="view-page">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2><i class="fa-solid fa-user-gear" style="color:#0f172a;"></i> Master Admin Control Center</h2>
+            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Admin Logout</button>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h4>Registered Donors</h4>
+                <span id="metricDonors">0</span>
+            </div>
+            <div class="metric-card">
+                <h4>Total Patient Requests</h4>
+                <span id="metricPatients">0</span>
+            </div>
+            <div class="metric-card">
+                <h4>Pending Approvals</h4>
+                <span id="metricPending" style="color:#d97706;">0</span>
+            </div>
+        </div>
+
+        <!-- Donor Management -->
+        <div class="data-card">
+            <h3 style="margin-bottom:12px;"><i class="fa-solid fa-hand-holding-medical" style="color:var(--primary);"></i> Registered Blood Donors</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Blood Group</th>
+                            <th>Locality</th>
+                            <th>Preferred Slot</th>
+                            <th>Phone</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminDonorTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Patient Request Management -->
+        <div class="data-card">
+            <h3 style="margin-bottom:12px;"><i class="fa-solid fa-bed-pulse" style="color:#0284c7;"></i> All Patient Requests</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Patient Name</th>
+                            <th>Group</th>
+                            <th>Units</th>
+                            <th>Required Date</th>
+                            <th>Hospital</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminPatientTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
     <script>
-        async function loadMetrics() {
-            try {
-                const res = await fetch('/api/admin/metrics');
-                const data = await res.json();
-                document.getElementById('visitors').innerText = data.totalVisitors;
-                document.getElementById('donors').innerText = data.totalDonors;
-                document.getElementById('healthy').innerText = data.healthyDonors;
-                document.getElementById('accuracy').innerText = data.qualityAccuracyRate;
-            } catch(e) {
-                console.error("Error loading metrics:", e);
+        // Data Stores
+        let donors = JSON.parse(localStorage.getItem('lf_donors')) || [];
+        let patientRequests = JSON.parse(localStorage.getItem('lf_patients')) || [];
+
+        // Bangalore Blood Banks Directory Data
+        const bangaloreBloodBanks = [
+            { name: "Rotary Bangalore TTK Blood Bank", location: "Indiranagar", stock: ["A+", "B+", "O+", "AB+", "O-"], phone: "+91 80 2528 7903" },
+            { name: "BMCRI Blood Bank (Victoria Hospital)", location: "KR Market / Fort", stock: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+"], phone: "+91 80 2670 1150" },
+            { name: "Rashtrotthana Blood Centre", location: "Jayanagar 4th Block", stock: ["A+", "B+", "B-", "O+", "AB+"], phone: "+91 80 2663 8310" },
+            { name: "Lions Blood Bank", location: "Malleswaram", stock: ["A+", "B+", "O+", "AB-"], phone: "+91 80 2334 3210" },
+            { name: "Narayana Hrudayalaya Blood Centre", location: "Electronic City / Bommasandra", stock: ["A+", "A-", "B+", "O+", "O-", "AB+"], phone: "+91 80 7122 2222" }
+        ];
+
+        let isBankLoggedIn = false;
+        let isAdminLoggedIn = false;
+        let currentBankTab = 'Emergency';
+
+        // Modal Controls
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // Category Switcher
+        function setPatientCategory(category) {
+            document.getElementById('patientCategory').value = category;
+            if(category === 'Emergency') {
+                document.getElementById('btnEmergency').classList.add('active');
+                document.getElementById('btnPrebooking').classList.remove('active');
+            } else {
+                document.getElementById('btnPrebooking').classList.add('active');
+                document.getElementById('btnEmergency').classList.remove('active');
             }
         }
-        loadMetrics();
+
+        // View Router
+        function showPage(pageId) {
+            if (pageId === 'bank-view' && !isBankLoggedIn) pageId = 'bank-login-view';
+            if (pageId === 'admin-view' && !isAdminLoggedIn) pageId = 'admin-login-view';
+
+            document.querySelectorAll('.view-page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            renderData();
+        }
+
+        // Authentication Handlers
+        function handleBankLogin(e) {
+            e.preventDefault();
+            if (document.getElementById('bankEmail').value === 'bank@lifeflow.com' && document.getElementById('bankPass').value === 'bank123') {
+                isBankLoggedIn = true;
+                document.getElementById('bankError').style.display = 'none';
+                showPage('bank-view');
+            } else {
+                document.getElementById('bankError').style.display = 'block';
+            }
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('adminUser').value;
+            const p = document.getElementById('adminPass').value;
+            if (u === 'admin' && p === 'admin123') {
+                isAdminLoggedIn = true;
+                document.getElementById('adminError').style.display = 'none';
+                showPage('admin-view');
+            } else {
+                document.getElementById('adminError').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            isBankLoggedIn = false;
+            isAdminLoggedIn = false;
+            showPage('home-view');
+        }
+
+        // Submissions
+        function handleDonorSubmit(e) {
+            e.preventDefault();
+            const newDonor = {
+                id: Date.now(),
+                name: document.getElementById('donorName').value,
+                age: document.getElementById('donorAge').value,
+                group: document.getElementById('donorGroup').value,
+                phone: document.getElementById('donorPhone').value,
+                city: document.getElementById('donorCity').value,
+                date: document.getElementById('donorDate').value,
+                time: document.getElementById('donorTime').value
+            };
+            donors.push(newDonor);
+            localStorage.setItem('lf_donors', JSON.stringify(donors));
+            alert('Donor Appointment Booked Successfully!');
+            document.getElementById('donorForm').reset();
+            closeModal('donorModal');
+        }
+
+        function handlePatientSubmit(e) {
+            e.preventDefault();
+            const selectedGroup = document.getElementById('patientGroup').value;
+            const newRequest = {
+                id: Date.now(),
+                category: document.getElementById('patientCategory').value,
+                name: document.getElementById('patientName').value,
+                group: selectedGroup,
+                units: document.getElementById('patientUnits').value,
+                reqDate: document.getElementById('patientReqDate').value,
+                hospital: document.getElementById('patientHospital').value,
+                phone: document.getElementById('patientPhone').value,
+                status: 'Pending'
+            };
+            patientRequests.push(newRequest);
+            localStorage.setItem('lf_patients', JSON.stringify(patientRequests));
+            
+            document.getElementById('patientForm').reset();
+            closeModal('patientModal');
+
+            document.getElementById('groupFilter').value = selectedGroup;
+            filterBangaloreBanks();
+            openModal('banksPopupModal');
+        }
+
+        // Admin & Bank Actions
+        function approveRequest(id) {
+            patientRequests = patientRequests.map(req => {
+                if(req.id === id) req.status = 'Dispatched / Approved';
+                return req;
+            });
+            localStorage.setItem('lf_patients', JSON.stringify(patientRequests));
+            renderData();
+        }
+
+        function deleteDonor(id) {
+            if(confirm('Are you sure you want to remove this donor entry?')) {
+                donors = donors.filter(d => d.id !== id);
+                localStorage.setItem('lf_donors', JSON.stringify(donors));
+                renderData();
+            }
+        }
+
+        function deletePatientRequest(id) {
+            if(confirm('Are you sure you want to delete this patient request?')) {
+                patientRequests = patientRequests.filter(r => r.id !== id);
+                localStorage.setItem('lf_patients', JSON.stringify(patientRequests));
+                renderData();
+            }
+        }
+
+        function switchBankTab(type) {
+            currentBankTab = type;
+            if(type === 'Emergency') {
+                document.getElementById('tabBankEmergency').classList.add('active');
+                document.getElementById('tabBankPrebooking').classList.remove('active');
+                document.getElementById('bankTableTitle').innerText = 'Live Emergency Patient Requests';
+            } else {
+                document.getElementById('tabBankPrebooking').classList.add('active');
+                document.getElementById('tabBankEmergency').classList.remove('active');
+                document.getElementById('bankTableTitle').innerText = 'Scheduled Pre-Booking Requests';
+            }
+            renderBankTable();
+        }
+
+        function filterBangaloreBanks() {
+            const searchVal = document.getElementById('bankSearch').value.toLowerCase();
+            const groupVal = document.getElementById('groupFilter').value;
+
+            const filtered = bangaloreBloodBanks.filter(b => {
+                const matchesText = b.name.toLowerCase().includes(searchVal) || b.location.toLowerCase().includes(searchVal);
+                const matchesGroup = groupVal === '' || b.stock.includes(groupVal);
+                return matchesText && matchesGroup;
+            });
+
+            const bbbTable = document.getElementById('bangaloreBanksTable');
+            bbbTable.innerHTML = filtered.length === 0 ? '<tr><td colspan="4" style="text-align:center; padding:20px;">No matching blood banks found in Bangalore.</td></tr>' :
+            filtered.map(b => `
+                <tr>
+                    <td><strong>${b.name}</strong></td>
+                    <td>${b.location}</td>
+                    <td>${b.stock.map(s => `<span class="blood-badge">${s}</span>`).join('')}</td>
+                    <td>${b.phone}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderBankTable() {
+            const filtered = patientRequests.filter(r => r.category === currentBankTab);
+            const bankTable = document.getElementById('bankPatientTable');
+            bankTable.innerHTML = filtered.length === 0 ? `<tr><td colspan="8" style="text-align:center; padding:20px;">No ${currentBankTab} requests found.</td></tr>` :
+            filtered.map(r => `
+                <tr>
+                    <td><strong>${r.name}</strong></td>
+                    <td><span class="blood-badge">${r.group}</span></td>
+                    <td>${r.units} Units</td>
+                    <td>${r.reqDate}</td>
+                    <td>${r.hospital}</td>
+                    <td>${r.phone}</td>
+                    <td><span class="status-badge ${r.status === 'Pending' ? 'status-pending' : 'status-approved'}">${r.status}</span></td>
+                    <td>${r.status === 'Pending' ? `<button class="action-btn btn-approve" onclick="approveRequest(${r.id})">Process & Dispatch</button>` : 'Completed'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderAdminDashboard() {
+            // Metrics
+            document.getElementById('metricDonors').innerText = donors.length;
+            document.getElementById('metricPatients').innerText = patientRequests.length;
+            document.getElementById('metricPending').innerText = patientRequests.filter(r => r.status === 'Pending').length;
+
+            // Admin Donor Table
+            const adminDonorTable = document.getElementById('adminDonorTable');
+            adminDonorTable.innerHTML = donors.length === 0 ? '<tr><td colspan="7" style="text-align:center; padding:20px;">No registered donors yet.</td></tr>' :
+            donors.map(d => `
+                <tr>
+                    <td><strong>${d.name}</strong></td>
+                    <td>${d.age} yrs</td>
+                    <td><span class="blood-badge">${d.group}</span></td>
+                    <td>${d.city}</td>
+                    <td>${d.date} (${d.time})</td>
+                    <td>${d.phone}</td>
+                    <td><button class="action-btn btn-delete" onclick="deleteDonor(${d.id})"><i class="fa-solid fa-trash"></i> Remove</button></td>
+                </tr>
+            `).join('');
+
+            // Admin Patient Requests Table
+            const adminPatientTable = document.getElementById('adminPatientTable');
+            adminPatientTable.innerHTML = patientRequests.length === 0 ? '<tr><td colspan="8" style="text-align:center; padding:20px;">No patient requests submitted yet.</td></tr>' :
+            patientRequests.map(r => `
+                <tr>
+                    <td><span style="font-weight:600; font-size:0.78rem; color:${r.category === 'Emergency' ? 'var(--primary)' : '#0284c7'};">${r.category}</span></td>
+                    <td><strong>${r.name}</strong></td>
+                    <td><span class="blood-badge">${r.group}</span></td>
+                    <td>${r.units} Units</td>
+                    <td>${r.reqDate}</td>
+                    <td>${r.hospital}</td>
+                    <td><span class="status-badge ${r.status === 'Pending' ? 'status-pending' : 'status-approved'}">${r.status}</span></td>
+                    <td>
+                        ${r.status === 'Pending' ? `<button class="action-btn btn-approve" onclick="approveRequest(${r.id})" style="margin-right:4px;">Approve</button>` : ''}
+                        <button class="action-btn btn-delete" onclick="deletePatientRequest(${r.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderData() {
+            filterBangaloreBanks();
+            renderBankTable();
+            renderAdminDashboard();
+        }
+
+        // Set default minimum date to today
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('donorDate').min = todayStr;
+        document.getElementById('patientReqDate').min = todayStr;
+
+        // Initialize
+        renderData();
     </script>
 </body>
 </html>
