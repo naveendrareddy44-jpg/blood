@@ -1,0 +1,28 @@
+{
+  "visitors": 0,
+  "donors": [],
+  "bookings": [],
+  "hospitals": [
+    {
+      "id": 1,
+      "name": "City Central Hospital",
+      "address": "123 Main St, Block A",
+      "contact": "+1 555-0192",
+      "bloodStock": { "A+": 10, "A-": 2, "B+": 8, "B-": 1, "O+": 15, "O-": 4, "AB+": 5, "AB-": 2 }
+    },
+    {
+      "id": 2,
+      "name": "St. Jude Emergency Center",
+      "address": "456 Healthcare Ave",
+      "contact": "+1 555-0843",
+      "bloodStock": { "A+": 4, "A-": 0, "B+": 12, "B-": 3, "O+": 6, "O-": 8, "AB+": 2, "AB-": 0 }
+    },
+    {
+      "id": 3,
+      "name": "Metro Trauma & Blood Institute",
+      "address": "789 Life Care Rd",
+      "contact": "+1 555-0411",
+      "bloodStock": { "A+": 0, "A-": 5, "B+": 3, "B-": 0, "O+": 20, "O-": 1, "AB+": 7, "AB-": 4 }
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Patient Blood Booking</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>🩸 Blood Bank Portal</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="donor.html">Donor Registration</a>
+            <a href="patient.html">Patient Portal</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>🔍 Search Available Hospital Stock</h2>
+            <form id="searchForm">
+                <label>Select Required Blood Group</label>
+                <select id="bloodGroup" required>
+                    <option value="A+">A+</option><option value="A-">A-</option>
+                    <option value="B+">B+</option><option value="B-">B-</option>
+                    <option value="O+">O+</option><option value="O-">O-</option>
+                    <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                </select>
+
+                <label>Select Booking Type</label>
+                <select id="bookingType" required>
+                    <option value="pre-booking">Pre-booking (Advance Schedule)</option>
+                    <option value="booking">Standard Booking (Pickup in 24h)</option>
+                    <option value="emergency">Emergency (Immediate Priority)</option>
+                </select>
+
+                <button type="submit">Search Available Hospitals</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>🏥 Available Hospitals</h2>
+            <div id="hospitalList"><p>Select options above and search.</p></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const group = document.getElementById('bloodGroup').value;
+            const type = document.getElementById('bookingType').value;
+
+            const res = await fetch(`/api/hospitals/search?bloodGroup=${encodeURIComponent(group)}&type=${type}`);
+            const data = await res.json();
+
+            const container = document.getElementById('hospitalList');
+            container.innerHTML = '';
+
+            if (data.hospitals.length === 0) {
+                container.innerHTML = `<p style="color:red;">No hospitals currently have stock for group ${group}.</p>`;
+                return;
+            }
+
+            data.hospitals.forEach(h => {
+                const badgeClass = type === 'emergency' ? 'badge-emergency' : (type === 'pre-booking' ? 'badge-prebooking' : 'badge-booking');
+                
+                container.innerHTML += `
+                    <div class="hospital-card">
+                        <div>
+                            <h3>${h.name} <span class="badge ${badgeClass}">${type.toUpperCase()}</span></h3>
+                            <p>📍 ${h.address} | 📞 ${h.contact}</p>
+                            <p><strong>Available Stock:</strong> ${h.bloodStock[group]} units</p>
+                        </div>
+                        <div>
+                            <button onclick="bookBlood(${h.id}, '${group}', '${type}')">Direct Visit / Book</button>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        async function bookBlood(hospitalId, bloodGroup, bookingType) {
+            const patientName = prompt("Enter Patient Name:");
+            const phone = prompt("Enter Contact Phone Number:");
+
+            if (!patientName || !phone) return alert("All fields are required.");
+
+            const res = await fetch('/api/bookings/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ patientName, phone, bloodGroup, hospitalId, bookingType })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ Reservation Successful!\n\nBooking ID: ${data.booking.id}\nHospital: ${data.booking.hospitalName}\nPlease visit directly with your Booking ID.`);
+                location.reload();
+            } else {
+                alert(`❌ Error: ${data.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

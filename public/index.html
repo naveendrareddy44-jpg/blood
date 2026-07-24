@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blood Bank Management System</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>🩸 Blood Bank Portal</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+            <a href="donor.html">Donor Registration</a>
+            <a href="patient.html">Patient Portal</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>⚙️ Admin System Dashboard</h2>
+            <p>Live metrics and system usage analytics</p>
+
+            <div class="grid-metrics">
+                <div class="metric-box">
+                    <h3 id="visitors">0</h3>
+                    <p>Total Site Visitors</p>
+                </div>
+                <div class="metric-box">
+                    <h3 id="donors">0</h3>
+                    <p>Registered Donors</p>
+                </div>
+                <div class="metric-box">
+                    <h3 id="healthy">0</h3>
+                    <p>Healthy Donors</p>
+                </div>
+                <div class="metric-box">
+                    <h3 id="accuracy">0%</h3>
+                    <p>Blood Screening Accuracy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadMetrics() {
+            try {
+                const res = await fetch('/api/admin/metrics');
+                const data = await res.json();
+                document.getElementById('visitors').innerText = data.totalVisitors;
+                document.getElementById('donors').innerText = data.totalDonors;
+                document.getElementById('healthy').innerText = data.healthyDonors;
+                document.getElementById('accuracy').innerText = data.qualityAccuracyRate;
+            } catch(e) {
+                console.error("Error loading metrics:", e);
+            }
+        }
+        loadMetrics();
+    </script>
+</body>
+</html>
